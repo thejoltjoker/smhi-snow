@@ -54,4 +54,5 @@ jobs:
         run: npm ci
 
       - name: Publish to npm
+        # Provenance is generated automatically via npm trusted publishing (OIDC).
         run: npm publish
