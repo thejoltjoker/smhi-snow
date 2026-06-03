@@ -2,7 +2,7 @@
 
 TypeScript client for the [SMHI SNOW1gv1](https://opendata.smhi.se/metfcst/snow1gv1) meteorological forecast API — the Swedish National Operational Weather (SNOW) model.
 
-Fetch point forecasts for a coordinate, grid-wide multipoint data for a parameter and time step, and metadata about available forecast times. Responses are parsed JSON with SMHI missing values (`9999`) normalized to `null`.
+Fetch point forecasts for a coordinate, grid-wide multipoint data for a parameter and time step, and metadata about available forecast times. `SmhiSnowClient` point and multipoint forecast methods normalize SMHI missing values (`9999`) to `null`.
 
 ## Features
 
@@ -75,20 +75,30 @@ All methods return promises and throw on network failure or non-OK HTTP status.
 
 Response and query types (`PointForecastResponse`, `GetPointForecastQuery`, `PointForecastParameter`, and others) are exported from the package for use in application code. JSDoc on the client, types, and URL helpers is available in the editor.
 
-For custom `fetch` workflows or tests, use `SmhiSnowUrl` and `BASE_URL` to build the same URLs the client uses:
+For custom `fetch` workflows or tests, use `SmhiSnowUrl` and `BASE_URL` to build the same URLs the client uses. Raw forecast JSON still contains `9999` sentinels — apply `normalizePointForecastResponse` or `normalizeMultipointForecastResponse` (both exported) before using forecast data:
 
 ```typescript
-import { BASE_URL, SmhiSnowUrl } from "smhi-snow";
+import {
+  SmhiSnowUrl,
+  normalizePointForecastResponse,
+  type PointForecastResponseRaw,
+} from "smhi-snow";
 
-SmhiSnowUrl.getPointForecast(18.07, 59.33);
+const url = SmhiSnowUrl.getPointForecast(18.07, 59.33);
+const raw = (await fetch(url).then((r) =>
+  r.json(),
+)) as PointForecastResponseRaw;
+const forecast = normalizePointForecastResponse(raw);
 ```
+
+`SmhiSnowClient` uses the platform `fetch` with no injectable implementation or `AbortSignal` in v1.0; pass your own `fetch` via `SmhiSnowUrl` if you need cancellation or mocking.
 
 Errors extend `Error` and can be distinguished with `instanceof`:
 
 | Class                     | When                                                       |
 | ------------------------- | ---------------------------------------------------------- |
 | `SmhiSnowNetworkError`    | `fetch` failed (DNS, timeout, etc.)                        |
-| `SmhiSnowApiError`        | HTTP response was not OK (`status` property)               |
+| `SmhiSnowApiError`        | HTTP response was not OK (`status`, optional `body`)       |
 | `SmhiSnowValidationError` | Invalid client-side query (e.g. `downsample` out of range) |
 
 ```typescript
@@ -237,7 +247,7 @@ Point and multipoint endpoints use the same parameter names as `getParameters()`
 
 ### Missing values
 
-SMHI uses `9999` as a sentinel for missing data. This client converts those values to `null` in normalized responses, so you can use nullish checks instead of magic numbers.
+SMHI uses `9999` as a sentinel for missing data. `SmhiSnowClient` forecast methods and the exported `normalizePointForecastResponse` / `normalizeMultipointForecastResponse` helpers convert those values to `null`, so you can use nullish checks instead of magic numbers.
 
 ### Coordinates
 
@@ -269,7 +279,7 @@ Integration tests call the live SMHI API:
 npm run test:integration
 ```
 
-Before publishing, `prepublishOnly` runs unit tests and `build`.
+Before publishing, `prepublishOnly` runs unit tests, lint, and `build`.
 
 ## SMHI data license
 

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { MULTIPOINT_TIME_FORMAT_MESSAGE } from "./errors";
 import { HIGH_PRECISION_POINT, HIGH_PRECISION_POINT_FORMATTED } from "./coords";
 import { SmhiSnowUrl, BASE_URL } from "./url";
 
@@ -124,6 +125,12 @@ describe("SmhiSnowUrl.getMultipointForecast", () => {
         "air_temperature",
       ),
     ).toBe(multipointBase);
+  });
+
+  it("throws when time is not compact or ISO 8601 UTC", () => {
+    expect(() =>
+      SmhiSnowUrl.getMultipointForecast("not-a-time", "air_temperature"),
+    ).toThrow(MULTIPOINT_TIME_FORMAT_MESSAGE);
   });
 
   it("returns the multipoint forecast URL with a custom version", () => {

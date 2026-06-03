@@ -1,3 +1,7 @@
+import {
+  MULTIPOINT_TIME_FORMAT_MESSAGE,
+  SmhiSnowValidationError,
+} from "./errors";
 import type {
   GetGeographicMultipointQuery,
   GetMultipointForecastQuery,
@@ -58,10 +62,12 @@ function appendGetPointForecastQuery(
 }
 
 const MULTIPOINT_TIME_PARAM = /^\d{8}T\d{6}Z$/;
+const ISO_TIME_PARAM = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
 function toMultipointTimeParam(time: string): string {
   if (MULTIPOINT_TIME_PARAM.test(time)) return time;
-  return time.replace(/[-:]/g, "");
+  if (ISO_TIME_PARAM.test(time)) return time.replace(/[-:]/g, "");
+  throw new SmhiSnowValidationError(MULTIPOINT_TIME_FORMAT_MESSAGE);
 }
 
 function appendGetMultipointForecastQuery(

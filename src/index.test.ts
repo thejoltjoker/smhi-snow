@@ -9,7 +9,7 @@ import {
   pointForecastRawFixtureForClient,
   timesFixture,
 } from "../test/fixtures";
-import { SmhiSnowClient } from "./index";
+import { SmhiSnowApiError, SmhiSnowClient } from "./index";
 import {
   expectApiError,
   expectNetworkError,
@@ -89,6 +89,44 @@ describe("SmhiSnowClient.getTimes", () => {
     stubFetchNetworkError();
     const client = new SmhiSnowClient();
     await expectNetworkError(client.getTimes());
+  });
+
+  it("throws a network error when the response body is not valid JSON", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.reject(new SyntaxError("Unexpected token")),
+      }),
+    );
+    const client = new SmhiSnowClient();
+    await expectNetworkError(
+      client.getTimes(),
+      "Invalid JSON response: Unexpected token",
+    );
+  });
+
+  it("includes the response body on API errors when present", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve("coordinates outside area"),
+      }),
+    );
+    const client = new SmhiSnowClient();
+    const rejection = await client.getTimes().then(
+      () => {
+        throw new Error("Expected promise to reject");
+      },
+      (err) => err,
+    );
+    expect(rejection).toBeInstanceOf(SmhiSnowApiError);
+    expect((rejection as SmhiSnowApiError).status).toBe(400);
+    expect((rejection as SmhiSnowApiError).body).toBe(
+      "coordinates outside area",
+    );
   });
 });
 

@@ -22,14 +22,18 @@ export class SmhiSnowNetworkError extends SmhiSnowError {
 export class SmhiSnowApiError extends SmhiSnowError {
   /** HTTP status code from the SMHI response. */
   readonly status: number;
+  /** Response body text when the server returned one (may be empty). */
+  readonly body: string | undefined;
 
   /**
    * @param status - HTTP status code (e.g. `400`, `503`).
+   * @param body - Optional response body for debugging.
    */
-  constructor(status: number) {
+  constructor(status: number, body?: string) {
     super(`SMHI API error: ${status}`);
     this.name = "SmhiSnowApiError";
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -44,3 +48,7 @@ export class SmhiSnowValidationError extends SmhiSnowError {
 /** Message used by {@link SmhiSnowValidationError} for invalid multipoint `downsample` values. */
 export const MULTIPOINT_DOWNSAMPLE_RANGE_MESSAGE =
   "SMHI multipoint downsample must be an integer between 1 and 20";
+
+/** Message used by {@link SmhiSnowValidationError} for invalid multipoint `time` values. */
+export const MULTIPOINT_TIME_FORMAT_MESSAGE =
+  "SMHI multipoint time must be compact (YYYYMMDDTHHMMSSZ) or ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ)";

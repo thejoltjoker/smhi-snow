@@ -29,6 +29,7 @@ export function stubFetchError503(): void {
     vi.fn().mockResolvedValue({
       ok: false,
       status: 503,
+      text: () => Promise.resolve(""),
     }),
   );
 }
@@ -57,6 +58,7 @@ export async function expectApiError(
 
 export async function expectNetworkError(
   promise: Promise<unknown>,
+  message = "Failed to fetch",
 ): Promise<void> {
   const rejection = await promise.then(
     () => {
@@ -65,7 +67,7 @@ export async function expectNetworkError(
     (err) => err,
   );
   expect(rejection).toBeInstanceOf(SmhiSnowNetworkError);
-  expect(rejection.message).toBe("SMHI network error: Failed to fetch");
+  expect(rejection.message).toBe(`SMHI network error: ${message}`);
 }
 
 export async function expectValidationError(

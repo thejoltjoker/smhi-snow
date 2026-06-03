@@ -25,9 +25,16 @@ import {
 } from "./errors";
 import { SmhiSnowUrl } from "./url";
 
+/** Missing-value normalization for raw forecast JSON (e.g. when using {@link SmhiSnowUrl} with custom `fetch`). */
+export {
+  normalizeMultipointForecastResponse,
+  normalizePointForecastResponse,
+} from "./normalize";
+
 /** Error types and validation messages thrown by {@link SmhiSnowClient}. */
 export {
   MULTIPOINT_DOWNSAMPLE_RANGE_MESSAGE,
+  MULTIPOINT_TIME_FORMAT_MESSAGE,
   SmhiSnowApiError,
   SmhiSnowError,
   SmhiSnowNetworkError,
@@ -89,8 +96,18 @@ export class SmhiSnowClient {
       const message = err instanceof Error ? err.message : String(err);
       throw new SmhiSnowNetworkError(message, { cause: err });
     }
-    if (!res.ok) throw new SmhiSnowApiError(res.status);
-    return res.json() as Promise<T>;
+    if (!res.ok) {
+      const body = await res.text().catch(() => undefined);
+      throw new SmhiSnowApiError(res.status, body);
+    }
+    try {
+      return (await res.json()) as T;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new SmhiSnowNetworkError(`Invalid JSON response: ${message}`, {
+        cause: err,
+      });
+    }
   }
 
   /**
