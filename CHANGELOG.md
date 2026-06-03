@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.1](https://github.com/thejoltjoker/smhi-snow/compare/smhi-snow-v0.2.0...smhi-snow-v0.2.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* add write permissions to ci ([69abf6b](https://github.com/thejoltjoker/smhi-snow/commit/69abf6b631f2bef5997632f08cc7b341ba9755d5))
+* explicit main branch release ci ([425fc86](https://github.com/thejoltjoker/smhi-snow/commit/425fc86271b119648d10d71189a2f625557d34a3))
+* refine README and update release workflow to specify target branch ([5d50310](https://github.com/thejoltjoker/smhi-snow/commit/5d503104ad505ffd42cc9a923978d83a0a6a2e17))
+* update release workflow to include RELEASE_PLEASE_TOKEN requirement ([#6](https://github.com/thejoltjoker/smhi-snow/issues/6)) ([a75bd55](https://github.com/thejoltjoker/smhi-snow/commit/a75bd55b02b4c2b8fea33dfcb06926eea3eadd8d))
+* update release workflow to include workflow_dispatch and clarify permissions ([98621c9](https://github.com/thejoltjoker/smhi-snow/commit/98621c945a9c933f028b2df7639c76913e95692a))
+
 ## [0.2.0](https://github.com/thejoltjoker/smhi-snow/compare/smhi-snow-v0.1.0...smhi-snow-v0.2.0) (2026-06-03)
 
 
