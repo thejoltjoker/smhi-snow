@@ -6,20 +6,23 @@
 #
 # Publish runs in this same workflow because releases created with GITHUB_TOKEN
 # do not trigger separate workflow runs.
+#
+# Requires repo Settings → Actions → General → Workflow permissions:
+# "Read and write permissions" (not read-only).
 name: Release
 
 on:
   push:
     branches: [main]
-
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  workflow_dispatch:
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
