@@ -4,6 +4,7 @@ export const HIGH_PRECISION_POINT = {
   latitude: 62.953277300448484,
 } as const;
 
+/** Same coordinates as {@link HIGH_PRECISION_POINT}, rounded to six decimals for URL paths. */
 export const HIGH_PRECISION_POINT_FORMATTED = {
   longitude: HIGH_PRECISION_POINT.longitude.toFixed(6),
   latitude: HIGH_PRECISION_POINT.latitude.toFixed(6),

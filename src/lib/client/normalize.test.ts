@@ -1,57 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { normalizePointForecastResponse } from "./normalize";
-import type { PointForecastResponseRaw } from "./types";
-
-const rawFixture: PointForecastResponseRaw = {
-  createdTime: "2026-06-02T17:31:13Z",
-  referenceTime: "2026-06-02T17:15:00Z",
-  geometry: { type: "Point", coordinates: [18.077207, 59.33036] },
-  timeSeries: [
-    {
-      time: "2026-06-02T18:00:00Z",
-      intervalParametersStartTime: "2026-06-02T17:00:00Z",
-      data: {
-        air_temperature: 18.5,
-        wind_from_direction: 207,
-        wind_speed: 2.7,
-        wind_speed_of_gust: 5.9,
-        relative_humidity: 55,
-        air_pressure_at_mean_sea_level: 1010.3,
-        visibility_in_air: 34.7,
-        thunderstorm_probability: 0,
-        probability_of_frozen_precipitation: 0,
-        cloud_area_fraction: 8,
-        low_type_cloud_area_fraction: 0,
-        medium_type_cloud_area_fraction: 7,
-        high_type_cloud_area_fraction: 1,
-        cloud_base_altitude: 9999,
-        cloud_top_altitude: 9999,
-        precipitation_amount_mean_deterministic: 0,
-        precipitation_amount_mean: 0,
-        precipitation_amount_min: 0,
-        precipitation_amount_max: 0,
-        precipitation_amount_median: 0,
-        probability_of_precipitation: 0,
-        precipitation_frozen_part: -9,
-        predominant_precipitation_type_at_surface: 0,
-        symbol_code: 6,
-      },
-    },
-  ],
-};
+import {
+  multipointRawFixtureForNormalize,
+  pointForecastRawFixture,
+} from "./fixtures";
+import {
+  normalizeMultipointForecastResponse,
+  normalizePointForecastResponse,
+} from "./normalize";
 
 describe("normalizePointForecastResponse", () => {
   it("replaces 9999 sentinel values with null in timeSeries data", () => {
-    const result = normalizePointForecastResponse(rawFixture);
+    const result = normalizePointForecastResponse(pointForecastRawFixture);
     expect(result.timeSeries[0].data.cloud_base_altitude).toBeNull();
     expect(result.timeSeries[0].data.cloud_top_altitude).toBeNull();
     expect(result.timeSeries[0].data.air_temperature).toBe(18.5);
   });
 
   it("preserves top-level fields and geometry", () => {
-    const result = normalizePointForecastResponse(rawFixture);
-    expect(result.createdTime).toBe(rawFixture.createdTime);
-    expect(result.referenceTime).toBe(rawFixture.referenceTime);
-    expect(result.geometry).toEqual(rawFixture.geometry);
+    const result = normalizePointForecastResponse(pointForecastRawFixture);
+    expect(result.createdTime).toBe(pointForecastRawFixture.createdTime);
+    expect(result.referenceTime).toBe(pointForecastRawFixture.referenceTime);
+    expect(result.geometry).toEqual(pointForecastRawFixture.geometry);
+  });
+});
+
+describe("normalizeMultipointForecastResponse", () => {
+  it("replaces 9999 sentinel values with null in array data", () => {
+    const result = normalizeMultipointForecastResponse(multipointRawFixtureForNormalize);
+    expect(result.timeSeries[0].data.air_temperature).toEqual([14.4, null, 15.6]);
+    expect(result.timeSeries[0].data.cloud_base_altitude).toEqual([100, null, 200]);
+  });
+
+  it("preserves top-level fields", () => {
+    const result = normalizeMultipointForecastResponse(multipointRawFixtureForNormalize);
+    expect(result.createdTime).toBe(multipointRawFixtureForNormalize.createdTime);
+    expect(result.referenceTime).toBe(multipointRawFixtureForNormalize.referenceTime);
   });
 });

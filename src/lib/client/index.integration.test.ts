@@ -41,3 +41,82 @@ describe("SMHI live API — high-precision point coordinates", () => {
     );
   });
 });
+
+describe("SMHI live API — parameters", () => {
+  it(
+    "returns parameter definitions with name, unit, and missingValue",
+    async () => {
+      const client = new SmhiSnowClient();
+      const result = await client.getParameters();
+
+      expect(result.parameter.length).toBeGreaterThan(0);
+      const first = result.parameter[0];
+      expect(first.name).toBeTypeOf("string");
+      expect(first.unit).toBeTypeOf("string");
+      expect(first.missingValue).toBe(9999);
+    },
+    15_000
+  );
+});
+
+describe("SMHI live API — geographic area", () => {
+  it(
+    "returns a GeoJSON polygon for the forecast bounding area",
+    async () => {
+      const client = new SmhiSnowClient();
+      const result = await client.getGeographicPolygon();
+
+      expect(result.type).toBe("Polygon");
+      expect(result.coordinates[0].length).toBeGreaterThan(0);
+    },
+    30_000
+  );
+
+  it(
+    "returns grid point coordinates as GeoJSON MultiPoint",
+    async () => {
+      const client = new SmhiSnowClient();
+      const result = await client.getGeographicMultipoint("1", {
+        downsample: 10,
+      });
+
+      expect(result.type).toBe("MultiPoint");
+      expect(result.coordinates.length).toBeGreaterThan(0);
+    },
+    30_000
+  );
+});
+
+describe("SMHI live API — multipoint forecast", () => {
+  it(
+    "resolves air_temperature grid data with downsample and withGeo query params",
+    async () => {
+      const client = new SmhiSnowClient();
+      const { time } = await client.getTimes();
+      const result = await client.getMultipointForecast(time[0], "air_temperature", "1", {
+        downsample: 10,
+        withGeo: false,
+      });
+
+      expect(result.timeSeries.length).toBeGreaterThan(0);
+      const values = result.timeSeries[0].data.air_temperature;
+      expect(values).toBeDefined();
+      expect(values!.length).toBeGreaterThan(0);
+    },
+    30_000
+  );
+
+  it(
+    "resolves wind_speed grid data for the same time",
+    async () => {
+      const client = new SmhiSnowClient();
+      const { time } = await client.getTimes();
+      const result = await client.getMultipointForecast(time[0], "wind_speed", "1", {
+        downsample: 10,
+      });
+
+      expect(result.timeSeries[0].data.wind_speed!.length).toBeGreaterThan(0);
+    },
+    30_000
+  );
+});

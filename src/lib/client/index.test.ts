@@ -1,68 +1,45 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { HIGH_PRECISION_POINT } from "./coords";
+import {
+  createdTimeFixture,
+  geographicMultipointFixture,
+  geographicPolygonFixture,
+  parametersFixture,
+  multipointForecastRawFixture,
+  pointForecastRawFixtureForClient,
+  timesFixture,
+} from "./fixtures";
 import { SmhiSnowClient } from "./index";
+import {
+  expectApiError,
+  expectNetworkError,
+  expectValidationError,
+  stubFetchError503,
+  stubFetchJson,
+  stubFetchNetworkError,
+} from "./test-helpers";
 import { SmhiSnowUrl } from "./url";
-import type {
-  CreatedTimeResponse,
-  PointForecastResponse,
-  PointForecastResponseRaw,
-  TimesResponse,
-} from "./types";
+import type { MultipointForecastResponse, PointForecastResponse } from "./types";
 
-const timesFixture: TimesResponse = {
-  time: ["2026-06-02T15:00:00Z", "2026-06-02T16:00:00Z"],
-};
-
-const createdTimeFixture: CreatedTimeResponse = {
-  createdTime: "2026-06-02T17:31:13Z",
-  referenceTime: "2026-06-02T17:15:00Z",
-};
-
-const pointForecastRawFixture: PointForecastResponseRaw = {
-  createdTime: "2026-06-02T17:31:13Z",
-  referenceTime: "2026-06-02T17:15:00Z",
-  geometry: { type: "Point", coordinates: [18.077207, 59.33036] },
+const multipointForecastNormalizedFixture: MultipointForecastResponse = {
+  ...multipointForecastRawFixture,
   timeSeries: [
     {
-      time: "2026-06-02T18:00:00Z",
-      intervalParametersStartTime: "2026-06-02T17:00:00Z",
+      ...multipointForecastRawFixture.timeSeries[0],
       data: {
-        air_temperature: 18.5,
-        wind_from_direction: 207,
-        wind_speed: 2.7,
-        wind_speed_of_gust: 5.9,
-        relative_humidity: 55,
-        air_pressure_at_mean_sea_level: 1010.3,
-        visibility_in_air: 34.7,
-        thunderstorm_probability: 0,
-        probability_of_frozen_precipitation: 0,
-        cloud_area_fraction: 8,
-        low_type_cloud_area_fraction: 0,
-        medium_type_cloud_area_fraction: 7,
-        high_type_cloud_area_fraction: 1,
-        cloud_base_altitude: 9999,
-        cloud_top_altitude: 2515,
-        precipitation_amount_mean_deterministic: 0,
-        precipitation_amount_mean: 0,
-        precipitation_amount_min: 0,
-        precipitation_amount_max: 0,
-        precipitation_amount_median: 0,
-        probability_of_precipitation: 0,
-        precipitation_frozen_part: -9,
-        predominant_precipitation_type_at_surface: 0,
-        symbol_code: 6,
+        air_temperature: [14.4, null, 15.6],
       },
     },
   ],
 };
 
 const pointForecastNormalizedFixture: PointForecastResponse = {
-  ...pointForecastRawFixture,
+  ...pointForecastRawFixtureForClient,
   timeSeries: [
     {
-      ...pointForecastRawFixture.timeSeries[0],
+      ...pointForecastRawFixtureForClient.timeSeries[0],
       data: {
-        ...pointForecastRawFixture.timeSeries[0].data,
+        ...pointForecastRawFixtureForClient.timeSeries[0].data,
         cloud_base_altitude: null,
       },
     },
@@ -75,10 +52,7 @@ afterEach(() => {
 
 describe("SmhiSnowClient.getTimes", () => {
   it("resolves with the parsed response on success", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(timesFixture),
-    }));
+    stubFetchJson(timesFixture);
 
     const client = new SmhiSnowClient();
     const result = await client.getTimes();
@@ -97,30 +71,68 @@ describe("SmhiSnowClient.getTimes", () => {
     expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.times());
   });
 
-  it("throws on a non-ok HTTP response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: false,
-      status: 503,
-    }));
+  it("calls fetch with a custom version URL when provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(timesFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
 
     const client = new SmhiSnowClient();
-    await expect(client.getTimes()).rejects.toThrow("SMHI API error: 503");
+    await client.getTimes("2");
+    expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.times("2"));
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getTimes());
   });
 
   it("throws a network error when fetch rejects", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Failed to fetch")));
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(client.getTimes());
+  });
+});
+
+describe("SmhiSnowClient.getParameters", () => {
+  it("resolves with the parsed response on success", async () => {
+    stubFetchJson(parametersFixture);
 
     const client = new SmhiSnowClient();
-    await expect(client.getTimes()).rejects.toThrow("SMHI network error: Failed to fetch");
+    const result = await client.getParameters();
+    expect(result).toEqual(parametersFixture);
+  });
+
+  it("calls fetch with the correct URL", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(parametersFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const client = new SmhiSnowClient();
+    await client.getParameters();
+    expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.parameter());
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getParameters());
+  });
+
+  it("throws a network error when fetch rejects", async () => {
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(client.getParameters());
   });
 });
 
 describe("SmhiSnowClient.getCreatedTime", () => {
   it("resolves with the parsed response on success", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(createdTimeFixture),
-    }));
+    stubFetchJson(createdTimeFixture);
 
     const client = new SmhiSnowClient();
     const result = await client.getCreatedTime();
@@ -139,32 +151,34 @@ describe("SmhiSnowClient.getCreatedTime", () => {
     expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.createdTime());
   });
 
-  it("throws on a non-ok HTTP response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: false,
-      status: 503,
-    }));
+  it("calls fetch with a custom version URL when provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(createdTimeFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
 
     const client = new SmhiSnowClient();
-    await expect(client.getCreatedTime()).rejects.toThrow("SMHI API error: 503");
+    await client.getCreatedTime("2");
+    expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.createdTime("2"));
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getCreatedTime());
   });
 
   it("throws a network error when fetch rejects", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Failed to fetch")));
-
+    stubFetchNetworkError();
     const client = new SmhiSnowClient();
-    await expect(client.getCreatedTime()).rejects.toThrow(
-      "SMHI network error: Failed to fetch"
-    );
+    await expectNetworkError(client.getCreatedTime());
   });
 });
 
 describe("SmhiSnowClient.getPointForecast", () => {
   it("resolves with normalized response on success", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(pointForecastRawFixture),
-    }));
+    stubFetchJson(pointForecastRawFixtureForClient);
 
     const client = new SmhiSnowClient();
     const result = await client.getPointForecast(18.07, 59.33);
@@ -174,7 +188,7 @@ describe("SmhiSnowClient.getPointForecast", () => {
   it("calls fetch with the correct URL", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(pointForecastRawFixture),
+      json: () => Promise.resolve(pointForecastRawFixtureForClient),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -189,7 +203,7 @@ describe("SmhiSnowClient.getPointForecast", () => {
     const { longitude, latitude } = HIGH_PRECISION_POINT;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(pointForecastRawFixture),
+      json: () => Promise.resolve(pointForecastRawFixtureForClient),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -200,24 +214,200 @@ describe("SmhiSnowClient.getPointForecast", () => {
     );
   });
 
+  it("calls fetch with query parameters when provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(pointForecastRawFixtureForClient),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const query = {
+      timeseries: 1,
+      parameters: ["air_temperature", "wind_speed"] as const,
+    };
+    const client = new SmhiSnowClient();
+    await client.getPointForecast(18.07, 59.33, "1", query);
+    expect(mockFetch).toHaveBeenCalledWith(
+      SmhiSnowUrl.getPointForecast(18.07, 59.33, "1", query)
+    );
+  });
+
   it("throws on a non-ok HTTP response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: false,
-      status: 503,
-    }));
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getPointForecast(18.07, 59.33));
+  });
+
+  it("throws a network error when fetch rejects", async () => {
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(client.getPointForecast(18.07, 59.33));
+  });
+});
+
+describe("SmhiSnowClient.getMultipointForecast", () => {
+  it("resolves with normalized response on success", async () => {
+    stubFetchJson(multipointForecastRawFixture);
 
     const client = new SmhiSnowClient();
-    await expect(client.getPointForecast(18.07, 59.33)).rejects.toThrow(
-      "SMHI API error: 503"
+    const result = await client.getMultipointForecast(
+      "2026-06-02T18:00:00Z",
+      "air_temperature"
+    );
+    expect(result).toEqual(multipointForecastNormalizedFixture);
+  });
+
+  it("calls fetch with the correct URL and gzip header", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(multipointForecastRawFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const client = new SmhiSnowClient();
+    await client.getMultipointForecast("2026-06-02T18:00:00Z", "air_temperature");
+    expect(mockFetch).toHaveBeenCalledWith(
+      SmhiSnowUrl.getMultipointForecast("2026-06-02T18:00:00Z", "air_temperature"),
+      { headers: { "Accept-Encoding": "gzip" } }
+    );
+  });
+
+  it("calls fetch with query parameters when provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(multipointForecastRawFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const query = { downsample: 10, withGeo: false as const };
+    const client = new SmhiSnowClient();
+    await client.getMultipointForecast(
+      "20260602T180000Z",
+      "wind_speed",
+      "1",
+      query
+    );
+    expect(mockFetch).toHaveBeenCalledWith(
+      SmhiSnowUrl.getMultipointForecast("20260602T180000Z", "wind_speed", "1", query),
+      { headers: { "Accept-Encoding": "gzip" } }
+    );
+  });
+
+  it("throws when downsample is out of range", async () => {
+    const client = new SmhiSnowClient();
+    await expectValidationError(
+      client.getMultipointForecast("20260602T180000Z", "air_temperature", "1", {
+        downsample: 21,
+      })
+    );
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(
+      client.getMultipointForecast("20260602T180000Z", "air_temperature")
     );
   });
 
   it("throws a network error when fetch rejects", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Failed to fetch")));
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(
+      client.getMultipointForecast("20260602T180000Z", "air_temperature")
+    );
+  });
+});
+
+describe("SmhiSnowClient.getGeographicPolygon", () => {
+  it("resolves with the parsed response on success", async () => {
+    stubFetchJson(geographicPolygonFixture);
 
     const client = new SmhiSnowClient();
-    await expect(client.getPointForecast(18.07, 59.33)).rejects.toThrow(
-      "SMHI network error: Failed to fetch"
+    const result = await client.getGeographicPolygon();
+    expect(result).toEqual(geographicPolygonFixture);
+  });
+
+  it("calls fetch with the correct URL", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(geographicPolygonFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const client = new SmhiSnowClient();
+    await client.getGeographicPolygon();
+    expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.geographicPolygon());
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getGeographicPolygon());
+  });
+
+  it("throws a network error when fetch rejects", async () => {
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(client.getGeographicPolygon());
+  });
+});
+
+describe("SmhiSnowClient.getGeographicMultipoint", () => {
+  it("resolves with the parsed response on success", async () => {
+    stubFetchJson(geographicMultipointFixture);
+
+    const client = new SmhiSnowClient();
+    const result = await client.getGeographicMultipoint();
+    expect(result).toEqual(geographicMultipointFixture);
+  });
+
+  it("calls fetch with the correct URL and gzip header", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(geographicMultipointFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const client = new SmhiSnowClient();
+    await client.getGeographicMultipoint();
+    expect(mockFetch).toHaveBeenCalledWith(SmhiSnowUrl.geographicMultipoint(), {
+      headers: { "Accept-Encoding": "gzip" },
+    });
+  });
+
+  it("calls fetch with query parameters when provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(geographicMultipointFixture),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const query = { downsample: 10 };
+    const client = new SmhiSnowClient();
+    await client.getGeographicMultipoint("1", query);
+    expect(mockFetch).toHaveBeenCalledWith(
+      SmhiSnowUrl.geographicMultipoint("1", query),
+      { headers: { "Accept-Encoding": "gzip" } }
     );
+  });
+
+  it("throws when downsample is out of range", async () => {
+    const client = new SmhiSnowClient();
+    await expectValidationError(
+      client.getGeographicMultipoint("1", { downsample: 0 })
+    );
+  });
+
+  it("throws on a non-ok HTTP response", async () => {
+    stubFetchError503();
+    const client = new SmhiSnowClient();
+    await expectApiError(client.getGeographicMultipoint());
+  });
+
+  it("throws a network error when fetch rejects", async () => {
+    stubFetchNetworkError();
+    const client = new SmhiSnowClient();
+    await expectNetworkError(client.getGeographicMultipoint());
   });
 });
