@@ -51,7 +51,7 @@ const grid = await client.getMultipointForecast(
   {
     downsample: 10,
     withGeo: false,
-  },
+  }
 );
 
 const temperatures = grid.timeSeries[0].data.air_temperature;
@@ -86,7 +86,7 @@ import {
 
 const url = SmhiSnowUrl.getPointForecast(18.07, 59.33);
 const raw = (await fetch(url).then((r) =>
-  r.json(),
+  r.json()
 )) as PointForecastResponseRaw;
 const forecast = normalizePointForecastResponse(raw);
 ```
@@ -186,7 +186,7 @@ const grid = await client.getMultipointForecast(
   "2026-06-02T18:00:00Z",
   "air_temperature",
   "1",
-  { downsample: 10, withGeo: false },
+  { downsample: 10, withGeo: false }
 );
 ```
 
@@ -283,7 +283,9 @@ Before publishing, `prepublishOnly` runs unit tests, lint, and `build`.
 
 ## Contributing and releases
 
-Work happens on the `dev` branch. When a batch of changes is ready, open a pull request from `dev` into `main`. CI runs on pull requests to both branches.
+`dev` is the default branch for day-to-day work. `main` is the release branch — only merge into it when you want changes to count toward a release.
+
+When a batch of changes is ready, open a pull request from `dev` into `main`. CI runs on pull requests to both branches. Branch protection applies to `main`, not `dev`.
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) so Release Please can generate `CHANGELOG.md`:
 
@@ -291,9 +293,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) so Release Plea
 - `fix:` — bug fix (patch bump)
 - `feat!:` or `BREAKING CHANGE:` in the body — breaking change
 
-If you squash-merge into `main`, the pull request title should use these prefixes — it becomes the commit message Release Please reads.
+If you squash-merge `dev` → `main`, the pull request title should use these prefixes — it becomes the commit message Release Please reads.
 
-After merges to `main`, Release Please opens or updates a release pull request (for example `chore(main): release 0.2.0`) with the version bump and changelog. Merge that PR when you want to ship; it creates a GitHub Release and publishes to npm via trusted publishing.
+After merges to `main`, Release Please opens or updates a release pull request (for example `chore(main): release 0.2.0`) with the version bump and changelog. **Merge that release PR with a regular merge commit** (not squash). Release Please expects its release commit to land on `main` as-is so versioning and tags stay in sync. Merging the release PR creates a GitHub Release and publishes to npm via trusted publishing.
 
 You do not need to bump `package.json` or write the changelog by hand.
 
