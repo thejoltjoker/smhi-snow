@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   multipointRawFixtureForNormalize,
   pointForecastRawFixture,
-} from "./fixtures";
+} from "../test/fixtures";
 import {
   normalizeMultipointForecastResponse,
   normalizePointForecastResponse,
@@ -26,14 +26,30 @@ describe("normalizePointForecastResponse", () => {
 
 describe("normalizeMultipointForecastResponse", () => {
   it("replaces 9999 sentinel values with null in array data", () => {
-    const result = normalizeMultipointForecastResponse(multipointRawFixtureForNormalize);
-    expect(result.timeSeries[0].data.air_temperature).toEqual([14.4, null, 15.6]);
-    expect(result.timeSeries[0].data.cloud_base_altitude).toEqual([100, null, 200]);
+    const result = normalizeMultipointForecastResponse(
+      multipointRawFixtureForNormalize,
+    );
+    expect(result.timeSeries[0].data.air_temperature).toEqual([
+      14.4,
+      null,
+      15.6,
+    ]);
+    expect(result.timeSeries[0].data.cloud_base_altitude).toEqual([
+      100,
+      null,
+      200,
+    ]);
   });
 
   it("preserves top-level fields", () => {
-    const result = normalizeMultipointForecastResponse(multipointRawFixtureForNormalize);
-    expect(result.createdTime).toBe(multipointRawFixtureForNormalize.createdTime);
-    expect(result.referenceTime).toBe(multipointRawFixtureForNormalize.referenceTime);
+    const result = normalizeMultipointForecastResponse(
+      multipointRawFixtureForNormalize,
+    );
+    expect(result.createdTime).toBe(
+      multipointRawFixtureForNormalize.createdTime,
+    );
+    expect(result.referenceTime).toBe(
+      multipointRawFixtureForNormalize.referenceTime,
+    );
   });
 });

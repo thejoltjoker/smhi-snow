@@ -17,17 +17,19 @@ function normalizeScalar(value: number): number | null {
 }
 
 function normalizeTimeSeriesData(
-  data: PointForecastTimeSeriesDataRaw
+  data: PointForecastTimeSeriesDataRaw,
 ): PointForecastTimeSeriesData {
   const normalized = {} as PointForecastTimeSeriesData;
-  for (const key of Object.keys(data) as (keyof PointForecastTimeSeriesDataRaw)[]) {
+  for (const key of Object.keys(
+    data,
+  ) as (keyof PointForecastTimeSeriesDataRaw)[]) {
     normalized[key] = normalizeScalar(data[key]);
   }
   return normalized;
 }
 
 function normalizeMultipointTimeSeriesData(
-  data: MultipointForecastTimeSeriesDataRaw
+  data: MultipointForecastTimeSeriesDataRaw,
 ): MultipointForecastTimeSeriesData {
   const normalized: MultipointForecastTimeSeriesData = {};
   for (const key of Object.keys(data) as PointForecastParameter[]) {
@@ -43,7 +45,7 @@ function normalizeMultipointTimeSeriesData(
  * Converts a raw point forecast response: SMHI missing values (`9999`) become `null`.
  */
 export function normalizePointForecastResponse(
-  raw: PointForecastResponseRaw
+  raw: PointForecastResponseRaw,
 ): PointForecastResponse {
   return {
     createdTime: raw.createdTime,
@@ -61,7 +63,7 @@ export function normalizePointForecastResponse(
  * Converts a raw multipoint forecast response: `9999` in each grid value becomes `null`.
  */
 export function normalizeMultipointForecastResponse(
-  raw: MultipointForecastResponseRaw
+  raw: MultipointForecastResponseRaw,
 ): MultipointForecastResponse {
   return {
     createdTime: raw.createdTime,

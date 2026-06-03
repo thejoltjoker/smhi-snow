@@ -1,17 +1,65 @@
 {
   "name": "smhi-snow",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "vitest run"
+  "description": "TypeScript client for the SMHI SNOW1gv1 open forecast API",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:integration": "vitest run test/integration",
+    "prepublishOnly": "vitest run && tsup",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write '**/*.{js,json,md,ts,tsx}'"
+  },
+  "keywords": [
+    "smhi",
+    "weather",
+    "forecast",
+    "snow",
+    "sweden",
+    "meteorology",
+    "api-client"
+  ],
+  "author": "Johannes <hello@thejoltjoker.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thejoltjoker/smhi-snow.git"
+  },
+  "homepage": "https://github.com/thejoltjoker/smhi-snow#readme",
+  "bugs": {
+    "url": "https://github.com/thejoltjoker/smhi-snow/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitest/eslint-plugin": "^1.6.19",
+    "eslint": "^10.4.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.3",
+    "tsup": "^8.5.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1",
     "vitest": "^4.1.8"
   }
 }

@@ -19,10 +19,6 @@ Fetch point forecasts for a coordinate, grid-wide multipoint data for a paramete
 npm install smhi-snow
 ```
 
-```bash
-pnpm add smhi-snow
-```
-
 ## Requirements
 
 Node.js 18+ (or any environment with a global `fetch` implementation).
@@ -55,7 +51,7 @@ const grid = await client.getMultipointForecast(
   {
     downsample: 10,
     withGeo: false,
-  }
+  },
 );
 
 const temperatures = grid.timeSeries[0].data.air_temperature;
@@ -71,7 +67,7 @@ All methods return promises and throw on network failure or non-OK HTTP status.
 | ---------------------------------------------------------- | ----------------------------------- |
 | `getCreatedTime(version?)`                                 | Latest model run and reference time |
 | `getTimes(version?)`                                       | Available forecast valid times      |
-| `getParameters(version?)`                                  | Parameter catalog (names, units)  |
+| `getParameters(version?)`                                  | Parameter catalog (names, units)    |
 | `getPointForecast(lon, lat, version?, query?)`             | Point forecast at a coordinate      |
 | `getMultipointForecast(time, parameter, version?, query?)` | Grid data for one parameter         |
 | `getGeographicPolygon(version?)`                           | Forecast area bounding polygon      |
@@ -89,10 +85,10 @@ SmhiSnowUrl.getPointForecast(18.07, 59.33);
 
 Errors extend `Error` and can be distinguished with `instanceof`:
 
-| Class | When |
-| ----- | ---- |
-| `SmhiSnowNetworkError` | `fetch` failed (DNS, timeout, etc.) |
-| `SmhiSnowApiError` | HTTP response was not OK (`status` property) |
+| Class                     | When                                                       |
+| ------------------------- | ---------------------------------------------------------- |
+| `SmhiSnowNetworkError`    | `fetch` failed (DNS, timeout, etc.)                        |
+| `SmhiSnowApiError`        | HTTP response was not OK (`status` property)               |
 | `SmhiSnowValidationError` | Invalid client-side query (e.g. `downsample` out of range) |
 
 ```typescript
@@ -180,7 +176,7 @@ const grid = await client.getMultipointForecast(
   "2026-06-02T18:00:00Z",
   "air_temperature",
   "1",
-  { downsample: 10, withGeo: false }
+  { downsample: 10, withGeo: false },
 );
 ```
 
@@ -199,9 +195,9 @@ Returns all SNOW grid points as a GeoJSON `MultiPoint`. The response is static. 
 
 **Query options**
 
-| Option       | Type     | Description                                                    |
-| ------------ | -------- | -------------------------------------------------------------- |
-| `downsample` | `1`–`20` | Return every Nth grid cell horizontally and vertically         |
+| Option       | Type     | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `downsample` | `1`–`20` | Return every Nth grid cell horizontally and vertically |
 
 ```typescript
 const grid = await client.getGeographicMultipoint("1", { downsample: 10 });
@@ -252,16 +248,28 @@ Longitude and latitude are formatted to six decimal places in point forecast URL
 Clone the repository and install dependencies:
 
 ```bash
-pnpm install
+npm install
 ```
 
-Run unit tests:
+Build the package (output in `dist/`):
 
 ```bash
-pnpm test
+npm run build
 ```
 
-Integration tests call the live SMHI API and are included in the default test run.
+Run unit tests (no network):
+
+```bash
+npm test
+```
+
+Integration tests call the live SMHI API:
+
+```bash
+npm run test:integration
+```
+
+Before publishing, `prepublishOnly` runs unit tests and `build`.
 
 ## SMHI data license
 
@@ -273,4 +281,4 @@ SMHI Open Data is published under [SMHI's terms and conditions](https://www.smhi
 
 ## License
 
-ISC
+MIT

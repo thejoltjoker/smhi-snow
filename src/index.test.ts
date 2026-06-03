@@ -8,7 +8,7 @@ import {
   multipointForecastRawFixture,
   pointForecastRawFixtureForClient,
   timesFixture,
-} from "./fixtures";
+} from "../test/fixtures";
 import { SmhiSnowClient } from "./index";
 import {
   expectApiError,
@@ -16,10 +16,14 @@ import {
   expectValidationError,
   stubFetchError503,
   stubFetchJson,
+  stubFetchJsonMock,
   stubFetchNetworkError,
-} from "./test-helpers";
+} from "../test/helpers";
 import { SmhiSnowUrl } from "./url";
-import type { MultipointForecastResponse, PointForecastResponse } from "./types";
+import type {
+  MultipointForecastResponse,
+  PointForecastResponse,
+} from "./types";
 
 const multipointForecastNormalizedFixture: MultipointForecastResponse = {
   ...multipointForecastRawFixture,
@@ -60,11 +64,7 @@ describe("SmhiSnowClient.getTimes", () => {
   });
 
   it("calls fetch with the correct URL", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(timesFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(timesFixture);
 
     const client = new SmhiSnowClient();
     await client.getTimes();
@@ -72,11 +72,7 @@ describe("SmhiSnowClient.getTimes", () => {
   });
 
   it("calls fetch with a custom version URL when provided", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(timesFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(timesFixture);
 
     const client = new SmhiSnowClient();
     await client.getTimes("2");
@@ -106,11 +102,7 @@ describe("SmhiSnowClient.getParameters", () => {
   });
 
   it("calls fetch with the correct URL", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(parametersFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(parametersFixture);
 
     const client = new SmhiSnowClient();
     await client.getParameters();
@@ -140,11 +132,7 @@ describe("SmhiSnowClient.getCreatedTime", () => {
   });
 
   it("calls fetch with the correct URL", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(createdTimeFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(createdTimeFixture);
 
     const client = new SmhiSnowClient();
     await client.getCreatedTime();
@@ -152,11 +140,7 @@ describe("SmhiSnowClient.getCreatedTime", () => {
   });
 
   it("calls fetch with a custom version URL when provided", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(createdTimeFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(createdTimeFixture);
 
     const client = new SmhiSnowClient();
     await client.getCreatedTime("2");
@@ -186,40 +170,28 @@ describe("SmhiSnowClient.getPointForecast", () => {
   });
 
   it("calls fetch with the correct URL", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(pointForecastRawFixtureForClient),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(pointForecastRawFixtureForClient);
 
     const client = new SmhiSnowClient();
     await client.getPointForecast(18.07, 59.33);
     expect(mockFetch).toHaveBeenCalledWith(
-      SmhiSnowUrl.getPointForecast(18.07, 59.33)
+      SmhiSnowUrl.getPointForecast(18.07, 59.33),
     );
   });
 
   it("calls fetch with a rounded URL for high-precision coordinates", async () => {
     const { longitude, latitude } = HIGH_PRECISION_POINT;
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(pointForecastRawFixtureForClient),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(pointForecastRawFixtureForClient);
 
     const client = new SmhiSnowClient();
     await client.getPointForecast(longitude, latitude);
     expect(mockFetch).toHaveBeenCalledWith(
-      SmhiSnowUrl.getPointForecast(longitude, latitude)
+      SmhiSnowUrl.getPointForecast(longitude, latitude),
     );
   });
 
   it("calls fetch with query parameters when provided", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(pointForecastRawFixtureForClient),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(pointForecastRawFixtureForClient);
 
     const query = {
       timeseries: 1,
@@ -228,7 +200,7 @@ describe("SmhiSnowClient.getPointForecast", () => {
     const client = new SmhiSnowClient();
     await client.getPointForecast(18.07, 59.33, "1", query);
     expect(mockFetch).toHaveBeenCalledWith(
-      SmhiSnowUrl.getPointForecast(18.07, 59.33, "1", query)
+      SmhiSnowUrl.getPointForecast(18.07, 59.33, "1", query),
     );
   });
 
@@ -252,32 +224,30 @@ describe("SmhiSnowClient.getMultipointForecast", () => {
     const client = new SmhiSnowClient();
     const result = await client.getMultipointForecast(
       "2026-06-02T18:00:00Z",
-      "air_temperature"
+      "air_temperature",
     );
     expect(result).toEqual(multipointForecastNormalizedFixture);
   });
 
   it("calls fetch with the correct URL and gzip header", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(multipointForecastRawFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(multipointForecastRawFixture);
 
     const client = new SmhiSnowClient();
-    await client.getMultipointForecast("2026-06-02T18:00:00Z", "air_temperature");
+    await client.getMultipointForecast(
+      "2026-06-02T18:00:00Z",
+      "air_temperature",
+    );
     expect(mockFetch).toHaveBeenCalledWith(
-      SmhiSnowUrl.getMultipointForecast("2026-06-02T18:00:00Z", "air_temperature"),
-      { headers: { "Accept-Encoding": "gzip" } }
+      SmhiSnowUrl.getMultipointForecast(
+        "2026-06-02T18:00:00Z",
+        "air_temperature",
+      ),
+      { headers: { "Accept-Encoding": "gzip" } },
     );
   });
 
   it("calls fetch with query parameters when provided", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(multipointForecastRawFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(multipointForecastRawFixture);
 
     const query = { downsample: 10, withGeo: false as const };
     const client = new SmhiSnowClient();
@@ -285,11 +255,16 @@ describe("SmhiSnowClient.getMultipointForecast", () => {
       "20260602T180000Z",
       "wind_speed",
       "1",
-      query
+      query,
     );
     expect(mockFetch).toHaveBeenCalledWith(
-      SmhiSnowUrl.getMultipointForecast("20260602T180000Z", "wind_speed", "1", query),
-      { headers: { "Accept-Encoding": "gzip" } }
+      SmhiSnowUrl.getMultipointForecast(
+        "20260602T180000Z",
+        "wind_speed",
+        "1",
+        query,
+      ),
+      { headers: { "Accept-Encoding": "gzip" } },
     );
   });
 
@@ -298,7 +273,7 @@ describe("SmhiSnowClient.getMultipointForecast", () => {
     await expectValidationError(
       client.getMultipointForecast("20260602T180000Z", "air_temperature", "1", {
         downsample: 21,
-      })
+      }),
     );
   });
 
@@ -306,7 +281,7 @@ describe("SmhiSnowClient.getMultipointForecast", () => {
     stubFetchError503();
     const client = new SmhiSnowClient();
     await expectApiError(
-      client.getMultipointForecast("20260602T180000Z", "air_temperature")
+      client.getMultipointForecast("20260602T180000Z", "air_temperature"),
     );
   });
 
@@ -314,7 +289,7 @@ describe("SmhiSnowClient.getMultipointForecast", () => {
     stubFetchNetworkError();
     const client = new SmhiSnowClient();
     await expectNetworkError(
-      client.getMultipointForecast("20260602T180000Z", "air_temperature")
+      client.getMultipointForecast("20260602T180000Z", "air_temperature"),
     );
   });
 });
@@ -329,11 +304,7 @@ describe("SmhiSnowClient.getGeographicPolygon", () => {
   });
 
   it("calls fetch with the correct URL", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(geographicPolygonFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(geographicPolygonFixture);
 
     const client = new SmhiSnowClient();
     await client.getGeographicPolygon();
@@ -363,11 +334,7 @@ describe("SmhiSnowClient.getGeographicMultipoint", () => {
   });
 
   it("calls fetch with the correct URL and gzip header", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(geographicMultipointFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(geographicMultipointFixture);
 
     const client = new SmhiSnowClient();
     await client.getGeographicMultipoint();
@@ -377,25 +344,21 @@ describe("SmhiSnowClient.getGeographicMultipoint", () => {
   });
 
   it("calls fetch with query parameters when provided", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(geographicMultipointFixture),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    const mockFetch = stubFetchJsonMock(geographicMultipointFixture);
 
     const query = { downsample: 10 };
     const client = new SmhiSnowClient();
     await client.getGeographicMultipoint("1", query);
     expect(mockFetch).toHaveBeenCalledWith(
       SmhiSnowUrl.geographicMultipoint("1", query),
-      { headers: { "Accept-Encoding": "gzip" } }
+      { headers: { "Accept-Encoding": "gzip" } },
     );
   });
 
   it("throws when downsample is out of range", async () => {
     const client = new SmhiSnowClient();
     await expectValidationError(
-      client.getGeographicMultipoint("1", { downsample: 0 })
+      client.getGeographicMultipoint("1", { downsample: 0 }),
     );
   });
 

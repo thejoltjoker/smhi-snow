@@ -6,7 +6,7 @@ import type {
   ParametersResponse,
   PointForecastResponseRaw,
   TimesResponse,
-} from "./types";
+} from "../src/types";
 
 export const timesFixture: TimesResponse = {
   time: ["2026-06-02T15:00:00Z", "2026-06-02T16:00:00Z"],
