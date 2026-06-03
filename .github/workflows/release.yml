@@ -7,8 +7,10 @@
 # Publish runs in this same workflow because releases created with GITHUB_TOKEN
 # do not trigger separate workflow runs.
 #
-# Requires repo Settings → Actions → General → Workflow permissions:
-# "Read and write permissions" (not read-only).
+# Requires:
+# - Settings → Actions → General → Workflow permissions: Read and write
+# - Secret RELEASE_PLEASE_TOKEN (fine-grained PAT: Contents + Pull requests R/W)
+#   GITHUB_TOKEN cannot create GitHub Releases on this private repo.
 name: Release
 
 on:
@@ -30,6 +32,7 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           target-branch: main
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json

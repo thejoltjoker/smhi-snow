@@ -299,6 +299,8 @@ After merges to `main`, Release Please opens or updates a release pull request (
 
 You do not need to bump `package.json` or write the changelog by hand.
 
+Release Please needs a repository secret **`RELEASE_PLEASE_TOKEN`**: a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with **Contents** and **Pull requests** read/write on this repo. The default `GITHUB_TOKEN` cannot create GitHub Releases here (private repo).
+
 ## SMHI data license
 
 SMHI Open Data is published under [SMHI's terms and conditions](https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning). This package is an unofficial wrapper; refer to the official documentation for authoritative API behavior:
