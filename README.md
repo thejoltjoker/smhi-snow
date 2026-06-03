@@ -299,7 +299,12 @@ After merges to `main`, Release Please opens or updates a release pull request (
 
 You do not need to bump `package.json` or write the changelog by hand.
 
-Release Please needs a repository secret **`RELEASE_PLEASE_TOKEN`**: a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with **Contents** and **Pull requests** read/write on this repo. The default `GITHUB_TOKEN` cannot create GitHub Releases here (private repo).
+Release Please needs a repository secret **`RELEASE_PLEASE_TOKEN`**: a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) scoped to this repo with:
+
+- **Contents** — read and write
+- **Pull requests** — read and write
+- **Workflows** — read and write (required because releases include workflow changes under `.github/workflows/`)
+- **Metadata** — read (always required)
 
 ## SMHI data license
 

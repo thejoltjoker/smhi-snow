@@ -9,8 +9,9 @@
 #
 # Requires:
 # - Settings → Actions → General → Workflow permissions: Read and write
-# - Secret RELEASE_PLEASE_TOKEN (fine-grained PAT: Contents + Pull requests R/W)
-#   GITHUB_TOKEN cannot create GitHub Releases on this private repo.
+# - Secret RELEASE_PLEASE_TOKEN (fine-grained PAT on this repo):
+#   Contents R/W, Pull requests R/W, Workflows R/W, Metadata R
+#   Workflows is required when the release includes .github/workflows changes.
 name: Release
 
 on:
