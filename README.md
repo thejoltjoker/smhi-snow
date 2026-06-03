@@ -281,6 +281,22 @@ npm run test:integration
 
 Before publishing, `prepublishOnly` runs unit tests, lint, and `build`.
 
+## Contributing and releases
+
+Work happens on the `dev` branch. When a batch of changes is ready, open a pull request from `dev` into `main`. CI runs on pull requests to both branches.
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) so Release Please can generate `CHANGELOG.md`:
+
+- `feat:` — new feature (minor bump while on 0.x)
+- `fix:` — bug fix (patch bump)
+- `feat!:` or `BREAKING CHANGE:` in the body — breaking change
+
+If you squash-merge into `main`, the pull request title should use these prefixes — it becomes the commit message Release Please reads.
+
+After merges to `main`, Release Please opens or updates a release pull request (for example `chore(main): release 0.2.0`) with the version bump and changelog. Merge that PR when you want to ship; it creates a GitHub Release and publishes to npm via trusted publishing.
+
+You do not need to bump `package.json` or write the changelog by hand.
+
 ## SMHI data license
 
 SMHI Open Data is published under [SMHI's terms and conditions](https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning). This package is an unofficial wrapper; refer to the official documentation for authoritative API behavior:
